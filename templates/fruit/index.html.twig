@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des Fruits{% endblock %}
+
+{% block body %}
+    <h1>Liste des Fruits</h1>
+
+    <table class="table" style="border-collapse: collapse; width: 100%;">
+        <thead>
+        <tr style="border-bottom: 2px solid #000;">
+            <th>Nom</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for fruit in fruits %}
+            <tr style="border-bottom: 1px solid #ccc;">
+                <td>{{ fruit.name }}</td>
+                <td>{{ fruit.description ?? '' }}</td>
+                <td class="actions">
+                    <a href="{{ path('app_fruit_show', {'id': fruit.id}) }}">Voir</a>
+                    <a href="{{ path('app_fruit_edit', {'id': fruit.id}) }}">Modifier</a>
+                    <a href="{{ path('app_fruit_delete', {'id': fruit.id}) }}">Supprimer</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="3">Aucun fruit trouvé.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_fruit_create') }}" class="btn btn-success">Ajouter un nouveau fruit</a>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des Légumes{% endblock %}
+
+{% block body %}
+    <h1>Liste des Légumes</h1>
+
+    <table class="table" style="border-collapse: collapse; width: 100%;">
+        <thead>
+        <tr style="border-bottom: 2px solid #000;">
+            <th>Nom</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for legume in legumes %}
+            <tr style="border-bottom: 1px solid #ccc;">
+                <td>{{ legume.name }}</td>
+                <td>
+
+                    {{ legume.description ?? '' }}
+                </td>
+                <td class="actions">
+                    <a href="{{ path('app_legume_show', {'id': legume.id}) }}">Voir</a>
+                    <a href="{{ path('app_legume_edit', {'id': legume.id}) }}">Modifier</a>
+                    <a href="{{ path('app_legume_delete', {'id': legume.id}) }}">Supprimer</a>
+
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="3">Aucun légume trouvé.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_legume_create') }}" class="btn btn-success">Ajouter un nouveau légume</a>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Éditer le Fruit{% endblock %}
+
+{% block body %}
+    <h1>Modifier le Fruit</h1>
+
+
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label }}">{{ message }}</div>
+        {% endfor %}
+    {% endfor %}
+
+
+    {{ form_start(form, { attr: { class: 'space-y-4' } }) }}
+
+    <div class="mb-3">
+        {{ form_label(form.name, 'Nom du fruit', { label_attr: { class: 'form-label fw-bold' } }) }}
+        {{ form_widget(form.name, { attr: { class: 'form-control', placeholder: 'Ex: Pomme' } }) }}
+        {{ form_errors(form.name) }}
+    </div>
+
+
+
+    <button class="btn btn-primary">Mettre à jour</button>
+    {{ form_end(form) }}
+
+    <div class="d-flex gap-2 mt-3">
+        <a class="btn btn-link" href="{{ path('app_fruits') }}">← Retour à la liste</a>
+
+
+
+    </div>
+{% endblock %}
+

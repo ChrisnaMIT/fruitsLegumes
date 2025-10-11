@@ -1,0 +1,29 @@
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails du Fruit{% endblock %}
+
+{% block body %}
+    <h1>Détails du Fruit</h1>
+
+    <table class="table">
+        <tbody>
+        <tr>
+            <th>Id</th>
+            <td>{{ fruit.id }}</td>
+        </tr>
+        <tr>
+            <th>Nom</th>
+            <td>{{ fruit.name }}</td>
+            <tr>
+            <th>Description</th>
+            <td>{{ fruit.description }}</td>
+        </tr>
+
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_fruits') }}" class="btn btn-secondary">Retour à la liste</a>
+    <a href="{{ path('app_fruit_edit', {'id': fruit.id}) }}" class="btn">Modifier</a>
+
+{% endblock %}

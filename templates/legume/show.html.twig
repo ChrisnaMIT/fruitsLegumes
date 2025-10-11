@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détail du Légume{% endblock %}
+
+{% block body %}
+    <h1>{{ legume.name }}</h1>
+
+    {% if legume.description is not null %}
+        <p>{{ legume.description }}</p>
+    {% endif %}
+
+    <div class="d-flex gap-2 mt-3">
+        <a class="btn btn-link" href="{{ path('app_legumes') }}">← Retour à la liste</a>
+        <a class="btn btn-primary" href="{{ path('app_legume_edit', {'id': legume.id}) }}">Modifier</a>
+    </div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau Légume{% endblock %}
+
+{% block body %}
+    <h1>Créer un Légume</h1>
+
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label }}">{{ message }}</div>
+        {% endfor %}
+    {% endfor %}
+
+    {{ form_start(form, { attr: { class: 'space-y-4' } }) }}
+
+    <div class="mb-3">
+        {{ form_label(form.name, 'Nom du légume', { label_attr: { class: 'form-label fw-bold' } }) }}
+        {{ form_widget(form.name, { attr: { class: 'form-control', placeholder: 'Ex: Carotte' } }) }}
+        {{ form_errors(form.name) }}
+    </div>
+
+
+    {% if form.description is defined %}
+        <div class="mb-3">
+            {{ form_label(form.description, 'Description') }}
+            {{ form_widget(form.description, { attr: { class: 'form-control', placeholder: 'Ex: Croquante et sucrée' } }) }}
+            {{ form_errors(form.description) }}
+        </div>
+    {% endif %}
+
+    <button class="btn btn-primary">Créer</button>
+    {{ form_end(form) }}
+
+    <a class="btn btn-link mt-3" href="{{ path('app_legumes') }}">← Retour à la liste</a>
+{% endblock %}

@@ -1,0 +1,116 @@
+# VARIABLES GITLAB : $SSH_PRIVATE_KEY $SSH_HOST $SSH_USER $SSH_PORT
+#                    $REMOTE_APP_DIR $REMOTE_COMPOSE_FILE
+variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_TLS_CERTDIR: ""
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+
+image: php:8.4-cli
+
+before_script:
+    - curl -sSk https://getcomposer.org/installer | php -- --disable-tls && mv composer.phar /usr/local/bin/composer
+    - composer install
+
+cache:
+    paths:
+        - vendor/
+
+
+stages:
+    - SecurityChecker
+    - CodingStandards
+    - UnitTests
+    - buildTheDamnThing
+    - deployThisThing
+
+
+security-checker:
+    image: jakzal/phpqa:php8.4
+    stage: SecurityChecker
+    script:
+        - local-php-security-checker  --path=./composer.lock
+    allow_failure: false
+
+phpcs:
+    image: jakzal/phpqa:php8.4
+    stage: CodingStandards
+    script:
+        - phpcs -v --standard=PSR12 --ignore=./src/Kernel.php ./src
+    allow_failure: false
+
+phpstan:
+    image: jakzal/phpqa:php8.4
+    stage: CodingStandards
+    script:
+        - phpstan analyse ./src
+    allow_failure: false
+
+twig-lint:
+    image: jakzal/phpqa:php8.4
+    stage: CodingStandards
+    script:
+        - twig-lint lint ./templates
+    allow_failure: false
+
+phpunit:
+    image: php:8.4-apache
+    stage: UnitTests
+    services:
+        - name: postgres:16-alpine
+          alias: psql
+    variables:
+        POSTGRES_DB: db_test_test
+        POSTGRES_USER: testuser
+        POSTGRES_PASSWORD: passpass
+        DATABASE_URL: 'postgresql://testuser:passpass@psql:5432/db_test?serverVersion=16&charset=utf8'
+    before_script:
+        - apt-get update && apt-get install -y git libzip-dev libpq-dev postgresql-client
+        - curl -sSk https://getcomposer.org/installer | php -- --disable-tls && mv composer.phar /usr/local/bin/composer
+        - docker-php-ext-install pgsql pdo pdo_pgsql zip
+        - composer install
+        - php bin/console doctrine:database:drop --force --env=test
+        - php bin/console doctrine:database:create --env=test
+        - php bin/console doctrine:migrations:migrate --env=test --no-interaction
+        - php bin/console importmap:install
+    script:
+        - php bin/phpunit
+    allow_failure: false
+
+buildTheDamnThing:
+    stage: buildTheDamnThing
+    image: docker:latest
+    services:
+        - docker:dind
+    before_script:
+        - echo "$CI_JOB_TOKEN" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    script:
+
+        - docker compose -f compose.prod.yaml build
+        - docker compose -f compose.prod.yaml push
+
+
+deployMe:
+    stage: deployThisThing
+    image: docker:latest
+    services:
+        - docker:dind
+
+    before_script:
+        - apk add --no-cache openssh-client
+        - eval "$(ssh-agent -s)"
+        - chmod 600 "$SSH_PRIVATE_KEY"
+        - ssh-add "$SSH_PRIVATE_KEY"
+        - mkdir -p ~/.ssh
+        - chmod 700 ~/.ssh
+        - ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
+        - chmod 600 ~/.ssh/known_hosts
+        - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+
+    script:
+        - ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "
+            cd $REMOTE_APP_DIR &&
+            echo "$CI_JOB_TOKEN" | docker login -u "gitlab-ci-token" --password-stdin "$CI_REGISTRY" &&
+            docker compose -f $REMOTE_COMPOSE_FILE down &&
+            docker compose -f $REMOTE_COMPOSE_FILE pull &&
+            docker compose -f $REMOTE_COMPOSE_FILE up -d
+            "
