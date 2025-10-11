@@ -3,10 +3,13 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -17,9 +20,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups("registration")]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
+    #[Groups("registration")]
     private ?string $email = null;
 
     /**
@@ -36,6 +41,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column]
     private bool $isVerified = false;
+
+    /**
+     * @var Collection<int, Fruit>
+     */
+    #[ORM\OneToMany(targetEntity: Fruit::class, mappedBy: 'author')]
+    private Collection $fruits;
+
+    /**
+     * @var Collection<int, Legume>
+     */
+    #[ORM\OneToMany(targetEntity: Legume::class, mappedBy: 'author')]
+    private Collection $legumes;
+
+    public function __construct()
+    {
+        $this->fruits = new ArrayCollection();
+        $this->legumes = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -126,6 +149,66 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setIsVerified(bool $isVerified): static
     {
         $this->isVerified = $isVerified;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Fruit>
+     */
+    public function getFruits(): Collection
+    {
+        return $this->fruits;
+    }
+
+    public function addFruit(Fruit $fruit): static
+    {
+        if (!$this->fruits->contains($fruit)) {
+            $this->fruits->add($fruit);
+            $fruit->setAuthor($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFruit(Fruit $fruit): static
+    {
+        if ($this->fruits->removeElement($fruit)) {
+            // set the owning side to null (unless already changed)
+            if ($fruit->getAuthor() === $this) {
+                $fruit->setAuthor(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Legume>
+     */
+    public function getLegumes(): Collection
+    {
+        return $this->legumes;
+    }
+
+    public function addLegume(Legume $legume): static
+    {
+        if (!$this->legumes->contains($legume)) {
+            $this->legumes->add($legume);
+            $legume->setAuthor($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLegume(Legume $legume): static
+    {
+        if ($this->legumes->removeElement($legume)) {
+            // set the owning side to null (unless already changed)
+            if ($legume->getAuthor() === $this) {
+                $legume->setAuthor(null);
+            }
+        }
 
         return $this;
     }

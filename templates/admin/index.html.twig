@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des utilisateurs{% endblock %}
+
+{% block body %}
+    <h1 class="mb-3">Gestion des utilisateurs</h1>
+
+    {# Flash messages #}
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label }} mb-3">{{ message }}</div>
+        {% endfor %}
+    {% endfor %}
+
+    <table class="table table-striped align-middle">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Email</th>
+            <th>Rôles</th>
+            <th class="text-end">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for user in users %}
+            {% set isAdmin = 'ROLE_ADMIN' in user.roles %}
+            {% set isSelf = app.user and user.id == app.user.id %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                    {% for r in user.roles %}
+                        <span class="badge bg-secondary">{{ r }}</span>
+                    {% endfor %}
+                </td>
+                <td class="text-end">
+                    {# Promote form #}
+                    <form action="{{ path('app_promote_admin', {id: user.id}) }}" method="post" class="d-inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('promote' ~ user.id) }}">
+                        <button type="submit" class="btn btn-sm btn-success"
+                                {% if isAdmin %}disabled{% endif %}>
+                            Promote (Admin)
+                        </button>
+                    </form>
+
+                    {# Demote form #}
+                    <form action="{{ path('app_demote_admin', {id: user.id}) }}" method="post" class="d-inline ms-1">
+                        <input type="hidden" name="_token" value="{{ csrf_token('demote' ~ user.id) }}">
+                        <button type="submit" class="btn btn-sm btn-warning"
+                                {% if not isAdmin or isSelf %}disabled{% endif %}>
+                            Demote
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="4" class="text-center text-muted">Aucun utilisateur</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+

@@ -24,6 +24,12 @@ final class LegumeController extends AbstractController
     #[Route('/legume/create', name: 'app_legume_create')]
     public function create(Request $request, EntityManagerInterface $manager): Response
     {
+        if (!$this->getUser()) {
+            return $this->redirectToRoute('app_login');
+        }
+
+
+
         $legume = new Legume();
         $form = $this->createForm(LegumeType::class, $legume);
         $form->handleRequest($request);
@@ -43,6 +49,11 @@ final class LegumeController extends AbstractController
     #[Route('/legume/show/{id}', name: 'app_legume_show')]
     public function show(Legume $legume): Response
     {
+        if (!$this->getUser()) {
+            return $this->redirectToRoute('app_login');
+        }
+
+
         return $this->render('legume/show.html.twig', [
             'legume' => $legume,
         ]);
@@ -51,6 +62,18 @@ final class LegumeController extends AbstractController
     #[Route('/legume/{id}/edit', name: 'app_legume_edit')]
     public function edit(Legume $legume, Request $request, EntityManagerInterface $manager): Response
     {
+        if (!$this->getUser()) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        if ($legume->getAuthor() !== $this->getUser()) {
+            $this->addFlash('error', 'Vous ne pouvez pas modifier ce legume.');
+            return $this->redirectToRoute('app_legumes');
+        }
+
+
+
+
         $form = $this->createForm(LegumeType::class, $legume);
         $form->handleRequest($request);
 
@@ -70,6 +93,16 @@ final class LegumeController extends AbstractController
     #[Route('/legume/{id}/delete', name: 'app_legume_delete')]
     public function delete(Legume $legume, EntityManagerInterface $manager): Response
     {
+        if (!$this->getUser()) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        if ($legume->getAuthor() !== $this->getUser()) {
+            $this->addFlash('error', 'Vous ne pouvez pas supprimer ce legume.');
+            return $this->redirectToRoute('app_legumes');
+        }
+
+
         $manager->remove($legume);
         $manager->flush();
 

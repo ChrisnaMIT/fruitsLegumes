@@ -16,6 +16,7 @@ final class FruitController extends AbstractController
     #[Route('/fruits', name: 'app_fruits')]
     public function index(FruitRepository $fruitRepository): Response
     {
+
         return $this->render('fruit/index.html.twig', [
             'fruits' => $fruitRepository->findAll(),
         ]);
@@ -25,9 +26,17 @@ final class FruitController extends AbstractController
     #[Route('/fruit/create', name: 'app_fruit_create')]
     public function create(Request $request, EntityManagerInterface $manager): Response
     {
+
+        if (!$this->getUser()) {
+            return $this->redirectToRoute('app_login');
+        }
+
+
+
         $fruit = new Fruit();
         $form = $this->createForm(FruitType::class, $fruit);
         $form->handleRequest($request);
+        $fruit->setAuthor($this->getUser());
         if ($form->isSubmitted() && $form->isValid()) {
             $manager->persist($fruit);
             $manager->flush();
@@ -42,6 +51,10 @@ final class FruitController extends AbstractController
     #[Route('/fruit/show/{id}', name: 'app_fruit_show')]
     public function show(Fruit $fruit): Response
     {
+        if (!$this->getUser()) {
+            return $this->redirectToRoute('app_login');
+        }
+
         return $this->render('fruit/show.html.twig', [
             'fruit' => $fruit,
         ]);
@@ -52,6 +65,17 @@ final class FruitController extends AbstractController
     #[Route('/fruit/{id}/edit', name: 'app_fruit_edit')]
     public function edit(Fruit $fruit, Request $request, EntityManagerInterface $manager): Response
     {
+
+        if (!$this->getUser()) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        if ($fruit->getAuthor() !== $this->getUser()) {
+            $this->addFlash('error', 'Vous ne pouvez pas modifier ce fruit.');
+            return $this->redirectToRoute('app_fruits');
+        }
+
+
         $form = $this->createForm(FruitType::class, $fruit);
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
@@ -67,6 +91,16 @@ final class FruitController extends AbstractController
     #[Route('/fruit/{id}/delete', name: 'app_fruit_delete')]
     public function delete(Fruit $fruit, EntityManagerInterface $manager): Response
     {
+        if (!$this->getUser()) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        if ($fruit->getAuthor() !== $this->getUser()) {
+            $this->addFlash('error', 'Vous ne pouvez pas supprimer ce fruit.');
+            return $this->redirectToRoute('app_fruits');
+        }
+
+
         $manager->remove($fruit);
         $manager->flush();
         return $this->redirectToRoute('app_fruits');
